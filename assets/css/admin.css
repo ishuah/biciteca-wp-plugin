@@ -1,0 +1,93 @@
+div#biciteca_settings.wrap input[type='text']{
+	width:300px;
+}
+
+div.wrap {
+	margin: 10px 20px 0 2px;
+}
+
+.wrap h2 {
+	font-size: 23px;
+	font-weight: 400;
+	padding: 9px 15px 4px 0;
+	line-height: 29px;
+}
+
+.panel {
+position: relative;
+overflow: auto;
+margin: 16px 0;
+padding: 1% 2% 0;
+border: 1px solid #e5e5e5;
+-webkit-box-shadow: 0 1px 1px rgba(0,0,0,.04);
+box-shadow: 0 1px 1px rgba(0,0,0,.04);
+background: #fff;
+font-size: 13px;
+line-height: 2.1em;
+}
+
+.panel h2 {
+margin: 0;
+font-size: 24px;
+font-weight: 400;
+line-height: 1.2;
+}
+
+.panel a.add-new-h2{
+	margin-left: 14px;
+}
+
+.half {
+	width: 50%;
+}
+
+div.station {
+	clear: both;
+}
+
+div.station div.details {
+	float: left;
+	margin: 0.3em 0;
+}
+
+.header {
+	margin: 0;
+	padding: 0 !important;
+}
+
+span.status {
+	font-size: 14px;
+	margin: 0 20px;
+	color: #777;
+}
+
+span.typcn.large {
+	font-size: 40px;
+}
+
+div.station a {
+	float: right;
+}
+
+span.status-marker {
+	float: left;
+	font-size: 20px;
+	color: gainsboro;
+}
+
+form.ordered {
+	float: left;
+	margin: 10px;
+}
+
+.green {
+	color: green !important;
+}
+
+.red{
+	color: red !important;
+}
+
+.yellow {
+	color: yellow !important;
+}

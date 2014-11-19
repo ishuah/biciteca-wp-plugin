@@ -1,0 +1,13 @@
+{
+	"folders":
+	[
+		{
+			"follow_symlinks": true,
+			"path": "/home/ishuah/workshop/wordpress_plugins"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "."
+		}
+	]
+}
