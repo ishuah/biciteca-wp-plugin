@@ -31,9 +31,29 @@ class biciteca_SMS_API {
 
  	protected function handle_request(){
  		global $wp;
+ 		if ($_POST['From'] == '' || $_POST['Body'] == '')
+ 			exit;
  		
- 		header('content-type: text/plain; charset=utf-8');
- 		$this->send_response('Hello '. $_POST['From'] . ' thanks for ' . $_POST['Body']);
+ 		$member_query = array(
+ 			'post_type' => 'member',
+ 			'meta_query' => array(
+ 					'relation' => 'AND',
+ 					array(
+ 						'key' => 'phone_number',
+ 						'value' => $_POST['From'],
+ 						'compare' => 'LIKE'
+ 						)
+ 				)
+ 			);
+
+ 		$members = query_posts($member_query);
+ 		
+ 		if (sizeof($members) == 1){
+ 			$this->send_response('Hello '. $_POST['From'] . ' thanks for ' . $_POST['Body']);
+ 		}else {
+ 			$this->send_response('Hi, this number is not registered on the bike system.');
+ 		}
+ 		
  	}
 
  	protected function send_response($msg){
