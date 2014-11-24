@@ -4,10 +4,30 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class biciteca_SMS_API {
 
+	private static $sms_responses = array();
+
 	public function __construct(){
 		add_filter('query_vars', array($this, 'add_query_vars'), 0);
 		add_action('parse_request', array($this, 'sniff_requests'), 0);
 		add_action('init', array($this, 'add_endpoint'), 0);
+
+		$this->sms_responses = array(
+		'EN' => array(
+			'EXPIRED_MEMBERSHIP' => 'I\'m sorry, you cannot check out a Biciteca bike at this time. You do not have a membership for this month. Please contact Desert Riderz at 760-625-6274 about renewing your monthly membership.',
+			'BIKES_AVAILABLE' => ' bikes are currently available at station ',
+			'NON_USER' => 'Hi, this number is not registered on the bike system. Please contact Desert Riderz at 760-625-6274 about starting your monthly membership.',
+			'INVALID_STATION' => 'The station code you sent is not valid, please try again. Thank you.',
+			'TAKEN_BIKE' => 'The bike you have requested is not available, please try another one. Thank you.',
+			'CHECKOUT_BIKE' => 'Your lock code is %d. You have 2 hours to enjoy your Biciteca bike.'
+			),
+		'ES' => array(
+			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a 760-625-6274 para renovar su membresía mensual.',
+			'BIKES_AVAILABLE' => ' bicicletas están disponibles en la estación ',
+			'INVALID_STATION' => 'El código de estación que usted envió no es válida, por favor intente de nuevo. Gracias.',
+			'TAKEN_BIKE' => 'La moto que ha solicitado no está disponible, por favor, pruebe otra. Gracias.',
+			'CHECKOUT_BIKE' => 'El código para abrir el candado es %d. Usted tiene dos horas para disfrutar la bicicleta de Biciteca.'
+			)
+		);
 	}
 
 	public function add_query_vars($vars){
@@ -33,13 +53,32 @@ class biciteca_SMS_API {
  		global $wp;
  		if ($_POST['From'] == '' || $_POST['Body'] == '')
  			exit;
- 		
+
+ 		$text = explode(" ", strtolower($_POST['Body']));
+ 		if (sizeof($text) < 2)
+ 			$this->send_response('Invalid query format.');
+
  		$member_query = array(
  			'post_type' => 'member',
  			'meta_query' => array(
- 					'relation' => 'AND',
+ 					'relation' => 'OR',
  					array(
  						'key' => 'phone_number',
+ 						'value' => $_POST['From'],
+ 						'compare' => 'LIKE'
+ 						),
+ 					array(
+ 						'key' => 'phone_number_1',
+ 						'value' => $_POST['From'],
+ 						'compare' => 'LIKE'
+ 						),
+ 					array(
+ 						'key' => 'phone_number_2',
+ 						'value' => $_POST['From'],
+ 						'compare' => 'LIKE'
+ 						),
+ 					array(
+ 						'key' => 'phone_number_3',
  						'value' => $_POST['From'],
  						'compare' => 'LIKE'
  						)
@@ -47,11 +86,54 @@ class biciteca_SMS_API {
  			);
 
  		$members = query_posts($member_query);
- 		
- 		if (sizeof($members) == 1){
- 			$this->send_response('Hello '. $_POST['From'] . ' thanks for ' . $_POST['Body']);
+
+ 		if ($members){
+ 			$lang = (get_post_meta($members[0]->ID, 'opt_language')[0] == 'ES' ? 'ES' : 'EN');
+ 			if($this->membership_is_valid($members[0]->ID)){
+ 				$station = query_posts(array(
+ 						'post_type'=>'station', 
+ 						'meta_query' => array(
+ 							'relation' => 'AND',
+ 							array(
+ 								'key' => 'station_code',
+ 								'value' => $text[1],
+ 								'compare' => 'LIKE'
+ 								)
+ 							)
+ 						))[0];
+
+ 				if(!$station){
+ 					$this->send_response($this->sms_responses[$lang]['INVALID_STATION']);
+ 					exit;
+ 				}
+
+ 				if ($text[0] == 'checkin'){
+
+ 				} elseif ($text[0] == 'checkout') {			
+
+ 					$lock_status = get_post_meta($station->ID, 'status_lockcode_' . $text[2]);
+ 					if ($lock_status[0] == 'taken'){
+ 						$this->send_response($this->sms_responses[$lang]['TAKEN_BIKE']);
+ 					} else {
+ 						$lock_code = get_post_meta($station->ID, 'lockcode_' . $text[2]);
+ 						$this->send_response(sprintf($this->sms_responses[$lang]['CHECKOUT_BIKE'], $lock_code[0]));
+ 						update_post_meta($station->ID, 'status_lockcode_' . $text[2], 'taken');
+ 					}
+ 				
+ 				} elseif ($text[0] == 'check'){
+ 					$count = 0;
+ 					for($i = 1; $i <=12; $i++){
+ 						$lock_status = get_post_meta($station->ID, 'status_lockcode_' . $i);
+ 						if ($lock_status[0] != 'taken')
+ 							$count++;
+ 					}
+ 					$this->send_response($count . $this->sms_responses[$lang]['BIKES_AVAILABLE'] . $text[1]);
+ 				}
+ 			} else {
+ 				$this->send_response($this->sms_responses[$lang]['EXPIRED_MEMBERSHIP']);
+ 			}
  		}else {
- 			$this->send_response('Hi, this number is not registered on the bike system.');
+ 			$this->send_response($this->sms_responses['EN']['NON_USER']);
  		}
  		
  	}
@@ -62,6 +144,15 @@ class biciteca_SMS_API {
     	$response .= '<Message>' . $msg . '</Message>';
     	$response .= '</Response>';
     	echo $response;
+ 	}
+
+ 	protected function membership_is_valid($memberId){
+ 		$today = new DateTime();
+ 		$expiry = new DateTime(get_post_meta($memberId, 'end_date')[0]);
+		if ($today->diff($expiry)->format('%R%a') >= 0){
+			return true;
+		}
+			return false;
  	}
 }
 ?>

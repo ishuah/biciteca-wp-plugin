@@ -91,3 +91,8 @@ form.ordered {
 .yellow {
 	color: yellow !important;
 }
+
+#ui-datepicker-div {
+	background: white;
+	padding: 10px;
+}

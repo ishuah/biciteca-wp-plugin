@@ -32,6 +32,8 @@ class biciteca {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_styles' ), 10, 1 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'typicons_enqueue_styles' ), 10, 1 );
 
+		add_action( 'admin_enqueue_scripts', array( $this, 'wp_enqueue_date_picker' ), 10, 1 );
+
 		add_action('admin_menu', array( $this, 'add_pages') );
 
 
@@ -88,6 +90,15 @@ class biciteca {
 		wp_register_script( $this->_token . '-admin', esc_url( $this->assets_url ) . 'js/admin' . $this->script_suffix . '.js', array( 'jquery' ), $this->_version );
 		wp_enqueue_script( $this->_token . '-admin' );
 	} // End admin_enqueue_scripts ()
+
+	public function wp_enqueue_date_picker(){
+		wp_enqueue_script(
+			'jquery-ui-datepicker',
+			time(),
+			true
+			);
+		
+	}
 
 	public function typicons_enqueue_styles ( $hook = '' ) {
 		wp_register_style( $this->_token . '-typicons', esc_url( $this->assets_url ) . 'font/typicons.css', array(), $this->_version );
@@ -200,7 +211,7 @@ class biciteca {
 				$station = get_post($_GET['id']);
 
 				if ($_POST['reset']){
-					for($i = 0; $i <=12; $i++){
+					for($i = 1; $i <=12; $i++){
 						update_post_meta($station->ID, 'new_lockcode_' . $i, rand(1000, 9999));
 					}
 					update_post_meta($station->ID, 'last_reset', date("F j, Y, g:i a"));
@@ -210,7 +221,7 @@ class biciteca {
 				}
 
 				if ($_POST['locks_are_updated']){
-					for($i = 0; $i <=12; $i++){
+					for($i = 1; $i <=12; $i++){
 						update_post_meta($station->ID, 'lockcode_' . $i, get_post_meta($station->ID, 'new_lockcode_'.$i)[0]);
 						delete_post_meta($station->ID, 'new_lockcode_'.$i);
 					}
@@ -221,7 +232,7 @@ class biciteca {
 				$station_status = $this->get_station_status($station->ID);
 
 				$html .= '<div class="details">'; 
-					$html .= '<span class="typcn typcn-media-record status-marker ' . $station_status['color'] . '"></span><h2 class="header">' . $station->post_title . '</h2>';
+					$html .= '<span class="typcn typcn-media-record status-marker ' . $station_status['color'] . '"></span><h2 class="header">' . $station->post_title . '</h2><span> Station code: ' . get_post_meta($station->ID, 'station_code')[0] . '</span>';
 					$html .= '<span class="status ' . $station_status['color'] . '">' . $station_status['last_reset'] . ' ' . $station_status['next_reset'] .'</span>';
 				$html .= '</div>';
 				$html .= '<form class="ordered" method="post" action="">' . "\n";
@@ -296,6 +307,7 @@ class biciteca {
 			}
 			update_post_meta($station->ID, 'last_reset', date("F j, Y, g:i a"));
 			update_post_meta($station->ID, 'next_reset', date("F j, Y, g:i a", strtotime("+7 day", time())));
+			update_post_meta($station->ID, 'station_code', $_POST['station_code']);
 			$html .= '<p> Station ' . $_POST['title'] . ' was added successfully!</p>';
 		}
 			$html .= '<form method="post" action="">' . "\n";
@@ -303,6 +315,11 @@ class biciteca {
 					$html .= '<tr>';
 						$html .= '<td>';
 							$html .= $this->admin->display_field(array('id'=>'title', 'type'=>'text', 'description'=>'New station\'s name', 'placeholder'=> 'Higher Station'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'station_code', 'type'=>'text', 'description'=>'New station\'s code', 'placeholder'=> 'ST1'), $station, false);
 						$html .= '</td>';
 					$html .= '</tr>';
 					$html .= '<tr>';
@@ -324,6 +341,7 @@ class biciteca {
 				'post_status' => 'publish'
 				);
 			$member_id = wp_insert_post( $new_member );
+			
 			foreach( $_POST as $key => $value){
 				if($key != 'title' and $key != 'post_type' and $key != 'Submit' ){
 					add_post_meta($member_id, $key, $value);
@@ -358,22 +376,22 @@ class biciteca {
 							$html .= '</tr>';
 							$html .= '<tr>';
 								$html .= '<td>';
-									$html .= $this->admin->display_field(array('id'=>'phone_number', 'type'=>'texttext', 'description'=>'Phone #'), false, false);
+									$html .= $this->admin->display_field(array('id'=>'phone_number', 'type'=>'text', 'description'=>'Phone #'), false, false);
 								$html .= '</td>';
 							$html .= '</tr>';
 							$html .= '<tr>';
 								$html .= '<td>';
-									$html .= $this->admin->display_field(array('id'=>'phone_number_1', 'type'=>'texttext', 'description'=>'Other Phone #'), false, false);
+									$html .= $this->admin->display_field(array('id'=>'phone_number_1', 'type'=>'text', 'description'=>'2nd Phone #'), false, false);
 								$html .= '</td>';
 							$html .= '</tr>';
 							$html .= '<tr>';
 								$html .= '<td>';
-									$html .= $this->admin->display_field(array('id'=>'phone_number_2', 'type'=>'texttext', 'description'=>'Other Phone #'), false, false);
+									$html .= $this->admin->display_field(array('id'=>'phone_number_2', 'type'=>'text', 'description'=>'3rd Phone #'), false, false);
 								$html .= '</td>';
 							$html .= '</tr>';
 							$html .= '<tr>';
 								$html .= '<td>';
-									$html .= $this->admin->display_field(array('id'=>'phone_number_3', 'type'=>'texttext', 'description'=>'Other Phone #'), false, false);
+									$html .= $this->admin->display_field(array('id'=>'phone_number_3', 'type'=>'text', 'description'=>'4th Phone #'), false, false);
 								$html .= '</td>';
 							$html .= '</tr>';
 							$html .= '<tr>';
@@ -388,7 +406,7 @@ class biciteca {
 							$html .= '</tr>';
 							$html .= '<tr>';
 								$html .= '<td>';
-									$html .= $this->admin->display_field(array('id'=>'membership_id', 'type'=>'texttext', 'description'=>'Membership ID'), false, false);
+									$html .= $this->admin->display_field(array('id'=>'membership_id', 'type'=>'text', 'description'=>'Membership ID'), false, false);
 								$html .= '</td>';
 							$html .= '</tr>';
 							$html .= '<tr>';
@@ -398,7 +416,7 @@ class biciteca {
 							$html .= '</tr>';
 							$html .= '<tr>';
 								$html .= '<td>';
-									$html .= $this->admin->display_field(array('id'=>'amount_paid', 'type'=>'number', 'description'=>'Amount paid'), false, false);
+									$html .= $this->admin->display_field(array('id'=>'amount_paid', 'type'=>'number', 'description'=>'Amount paid ($)'), false, false);
 								$html .= '</td>';
 							$html .= '</tr>';
 							$html .= '<tr>';
@@ -440,11 +458,32 @@ class biciteca {
 					wp_update_post( $member );
 				}
 
+				$individual = false;
 				foreach( $_POST as $key => $value){
 					if($key != 'title' and $key != 'post_type' and $key != 'Submit' ){
 						$prev_value = get_post_meta( $member->ID, $key, true );
 						if ( $prev_value != $value ){
-							update_post_meta($member->ID, $key, $value, $prev_value);
+							if ( $key == 'membership_type' && $value == 'individual'){
+
+								$individual = true;
+								delete_post_meta($member->ID, 'phone_number_1');
+								delete_post_meta($member->ID, 'phone_number_2');
+								delete_post_meta($member->ID, 'phone_number_3');
+							}
+
+							if ($individual){
+								if ($key != 'phone_number_1' && $key != 'phone_number_2' && $key != 'phone_number_3'){
+									update_post_meta($member->ID, $key, $value, $prev_value);
+								}
+							} else {
+								update_post_meta($member->ID, $key, $value, $prev_value);
+							}
+						}
+
+						if($key != 'title' and $key != 'post_type' and $key != 'Submit' ){
+							
+							
+							
 						}
 					}
 				}
@@ -475,17 +514,17 @@ class biciteca {
 						$html .= '</tr>';
 						$html .= '<tr>';
 							$html .= '<td>';
-								$html .= $this->admin->display_field(array('id'=>'phone_number_1', 'type'=>'text', 'description'=>'Other Phone #'), $member, false);
+								$html .= $this->admin->display_field(array('id'=>'phone_number_1', 'type'=>'text', 'description'=>'2nd Phone #'), $member, false);
 							$html .= '</td>';
 						$html .= '</tr>';
 						$html .= '<tr>';
 							$html .= '<td>';
-								$html .= $this->admin->display_field(array('id'=>'phone_number_2', 'type'=>'text', 'description'=>'Other Phone #'), $member, false);
+								$html .= $this->admin->display_field(array('id'=>'phone_number_2', 'type'=>'text', 'description'=>'3rd Phone #'), $member, false);
 							$html .= '</td>';
 						$html .= '</tr>';
 						$html .= '<tr>';
 							$html .= '<td>';
-								$html .= $this->admin->display_field(array('id'=>'phone_number_3', 'type'=>'text', 'description'=>'Other Phone #'), $member, false);
+								$html .= $this->admin->display_field(array('id'=>'phone_number_3', 'type'=>'text', 'description'=>'4th Phone #'), $member, false);
 							$html .= '</td>';
 						$html .= '</tr>';
 						$html .= '<tr>';
@@ -510,7 +549,7 @@ class biciteca {
 						$html .= '</tr>';
 						$html .= '<tr>';
 							$html .= '<td>';
-								$html .= $this->admin->display_field(array('id'=>'amount_paid', 'type'=>'number', 'description'=>'Amount paid'), $member, false);
+								$html .= $this->admin->display_field(array('id'=>'amount_paid', 'type'=>'number', 'description'=>'Amount paid ($)'), $member, false);
 							$html .= '</td>';
 						$html .= '</tr>';
 						$html .= '<tr>';
