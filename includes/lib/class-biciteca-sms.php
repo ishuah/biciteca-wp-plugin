@@ -18,14 +18,22 @@ class biciteca_SMS_API {
 			'NON_USER' => 'Hi, this number is not registered on the bike system. Please contact Desert Riderz at 760-625-6274 about starting your monthly membership.',
 			'INVALID_STATION' => 'The station code you sent is not valid, please try again. Thank you.',
 			'TAKEN_BIKE' => 'The bike you have requested is not available, please try another one. Thank you.',
-			'CHECKOUT_BIKE' => 'Your lock code is %d. You have 2 hours to enjoy your Biciteca bike.'
+			'CHECKOUT_BIKE' => 'Your lock code is %d. You have 2 hours to enjoy your Biciteca bike.',
+			'CHECKIN_BIKE' => 'Your lock code is %d. Thank you for returning your Biciteca bike safely. We hope you enjoyed Biciteca, come back soon!',
+			'CANNOT_CHECKOUT_BIKE' => 'I\'m sorry, you cannot check out a Biciteca bike at this time as you already have a bike checked-out.',
+			'CANNOT_CHECKIN_BIKE' => 'I\'m sorry, you cannot check in a Biciteca bike, you do not have a bike checked-out.',
+			'UNAVAILABLE_SLOT' => 'The requested slot is not vacant, please try another one. Thank you.'
 			),
 		'ES' => array(
 			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a 760-625-6274 para renovar su membresía mensual.',
 			'BIKES_AVAILABLE' => ' bicicletas están disponibles en la estación ',
 			'INVALID_STATION' => 'El código de estación que usted envió no es válida, por favor intente de nuevo. Gracias.',
 			'TAKEN_BIKE' => 'La moto que ha solicitado no está disponible, por favor, pruebe otra. Gracias.',
-			'CHECKOUT_BIKE' => 'El código para abrir el candado es %d. Usted tiene dos horas para disfrutar la bicicleta de Biciteca.'
+			'CHECKOUT_BIKE' => 'El código para abrir el candado es %d. Usted tiene dos horas para disfrutar la bicicleta de Biciteca.',
+			'CHECKIN_BIKE' => 'Su código de candado es %d. Gracias por devolver la bicicleta a la estación de Biciteca con seguridad. Esperamos que haya disfrutado los servicios de Biciteca, vuelva pronto!',
+			'CANNOT_CHECKOUT_BIKE' => 'Lo lamento, no puede usar una bicicleta de Biciteca en este momento porque usted ya ha sacado una bicicleta.',
+			'CANNOT_CHECKIN_BIKE' => 'Lo siento, no se puede comprobar en una bicicleta Biciteca, usted no tiene una bicicleta desprotegido.',
+			'UNAVAILABLE_SLOT' => 'La solicitud de franja horaria no es vacante, por favor pruebe otra. Gracias.'
 			)
 		);
 	}
@@ -108,24 +116,56 @@ class biciteca_SMS_API {
  				}
 
  				if ($text[0] == 'checkin'){
+ 					$valid = false;
+ 					for($i = 1; $i <=12; $i++){
+ 						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $i);
+ 						if ($lock_status[0] == $_POST['From']) {
+ 							$valid = true;
+ 							break;
+ 						}
+ 					}
+ 					if($valid){
+ 						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $text[2]);
+	 					if ($lock_status[0]){
+	 						$lock_code = get_post_meta($station->ID, 'lockcode_' . $text[2]);
+	 						$this->send_response(sprintf($this->sms_responses[$lang]['CHECKIN_BIKE'], $lock_code[0]));
+	 						delete_post_meta($station->ID, 'slot_taken_' . $text[2]);
+	 					} else {
+	 						$this->send_response($this->sms_responses[$lang]['UNAVAILABLE_SLOT']);
+	 					}
+ 					} else {
+ 						$this->send_response($this->sms_responses[$lang]['CANNOT_CHECKIN_BIKE']);
+ 					}
+ 					
 
- 				} elseif ($text[0] == 'checkout') {			
+ 				} elseif ($text[0] == 'checkout') {	
+ 					for($i = 1; $i <=12; $i++){
+ 						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $i);
+ 						if ($lock_status[0] == $_POST['From']) {
+ 							$this->send_response($this->sms_responses[$lang]['CANNOT_CHECKOUT_BIKE']);
+ 							exit;
+ 						}
+ 					}		
 
- 					$lock_status = get_post_meta($station->ID, 'status_lockcode_' . $text[2]);
- 					if ($lock_status[0] == 'taken'){
+ 					$lock_status = get_post_meta($station->ID, 'slot_taken_' . $text[2]);
+ 					if ($lock_status[0]){
  						$this->send_response($this->sms_responses[$lang]['TAKEN_BIKE']);
  					} else {
  						$lock_code = get_post_meta($station->ID, 'lockcode_' . $text[2]);
  						$this->send_response(sprintf($this->sms_responses[$lang]['CHECKOUT_BIKE'], $lock_code[0]));
- 						update_post_meta($station->ID, 'status_lockcode_' . $text[2], 'taken');
+ 						update_post_meta($station->ID, 'slot_taken_' . $text[2], $_POST['From']);
  					}
  				
  				} elseif ($text[0] == 'check'){
  					$count = 0;
  					for($i = 1; $i <=12; $i++){
- 						$lock_status = get_post_meta($station->ID, 'status_lockcode_' . $i);
- 						if ($lock_status[0] != 'taken')
+ 						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $i);
+ 						if (is_null($lock_status[0])){
  							$count++;
+ 						}elseif ($lock_status[0] == $_POST['From']) {
+ 							$this->send_response($this->sms_responses[$lang]['CANNOT_CHECKOUT_BIKE']);
+ 							exit;
+ 						}
  					}
  					$this->send_response($count . $this->sms_responses[$lang]['BIKES_AVAILABLE'] . $text[1]);
  				}
