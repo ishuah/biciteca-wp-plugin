@@ -63,9 +63,7 @@ class biciteca_SMS_API {
  			exit;
 
  		$text = explode(" ", strtolower($_POST['Body']));
- 		if (sizeof($text) < 2)
- 			$this->send_response('Invalid query format.');
-
+ 		
  		$member_query = array(
  			'post_type' => 'member',
  			'meta_query' => array(
@@ -97,7 +95,10 @@ class biciteca_SMS_API {
 
  		if ($members){
  			$lang = (get_post_meta($members[0]->ID, 'opt_language')[0] == 'ES' ? 'ES' : 'EN');
- 			if($this->membership_is_valid($members[0]->ID)){
+ 			if ($text[0] == 'help'){
+ 				$this->send_response("We are compiling help content, please bear with us.");
+ 			} else {
+ 				if($this->membership_is_valid($members[0]->ID)){
  				$station = query_posts(array(
  						'post_type'=>'station', 
  						'meta_query' => array(
@@ -171,6 +172,7 @@ class biciteca_SMS_API {
  				}
  			} else {
  				$this->send_response($this->sms_responses[$lang]['EXPIRED_MEMBERSHIP']);
+ 			}
  			}
  		}else {
  			$this->send_response($this->sms_responses['EN']['NON_USER']);

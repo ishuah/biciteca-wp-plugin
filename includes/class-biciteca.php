@@ -114,6 +114,7 @@ class biciteca {
 		add_submenu_page('biciteca-plugin', __('Admin','biciteca'), __('Admin','biciteca'), 'manage_options', 'biciteca-admin', array( $this, 'admin_landing_page') );
 		
 		add_submenu_page('biciteca-admin', __('Biciteca Add Station','biciteca'), __('Biciteca Add Station','biciteca'), 'manage_options', 'biciteca-add-station', array( $this, 'add_station_page') );
+		add_submenu_page('biciteca-admin', __('Biciteca Edit Station','biciteca'), __('Biciteca Edit Station','biciteca'), 'manage_options', 'biciteca-edit-station', array( $this, 'edit_station_page') );
 		add_submenu_page('biciteca-admin', __('Biciteca Change Lock Codes','biciteca'), __('Biciteca Change Lock Codes','biciteca'), 'manage_options', 'biciteca-admin-manage-station', array( $this, 'manage_station_page') );
 		add_submenu_page('biciteca-registration', __('Edit Member Details','biciteca'), __('Edit Member Details','biciteca'), 'manage_options', 'biciteca-edit-member', array( $this, 'edit_member_page') );
 	}
@@ -232,7 +233,9 @@ class biciteca {
 				$station_status = $this->get_station_status($station->ID);
 
 				$html .= '<div class="details">'; 
-					$html .= '<span class="typcn typcn-media-record status-marker ' . $station_status['color'] . '"></span><h2 class="header">' . $station->post_title . '</h2><span> Station code: ' . get_post_meta($station->ID, 'station_code')[0] . '</span>';
+					$html .= '<span class="typcn typcn-media-record status-marker ' . $station_status['color'] . '"></span><h2 class="header">' . $station->post_title;
+					$html .= '<a class="add-new-h2" href="?page=biciteca-edit-station&id=' . $station->ID . '" />' . esc_attr( __( 'Edit Station Details' , 'biciteca' ) ) . '</a>' . "\n";
+					$html .= '</h2><span> Station code: ' . get_post_meta($station->ID, 'station_code')[0] . '</span>';
 					$html .= '<span class="status ' . $station_status['color'] . '">' . $station_status['last_reset'] . ' ' . $station_status['next_reset'] .'</span>';
 				$html .= '</div>';
 				$html .= '<form class="ordered" method="post" action="">' . "\n";
@@ -324,6 +327,11 @@ class biciteca {
 					$html .= '</tr>';
 					$html .= '<tr>';
 						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'location', 'type'=>'text', 'description'=>'Description of the station\'s location.', 'placeholder'=> 'Next to the ferris wheel'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
 							$html .= '<input name="Submit" type="submit" class="button-primary" value="' . esc_attr( __( 'Save' , 'biciteca' ) ) . '" />' . "\n";
 						$html .= '</td>';
 					$html .= '</tr>';
@@ -331,6 +339,48 @@ class biciteca {
 			$html .= '</form>';
 		$html .= '</div>';
 		echo $html;
+	}
+
+	public function edit_station_page(){
+		$html = '<div class="wrap" id="' . $this->_token . '_settings">' . "\n";
+		$html .= '<h2>' . __('Biciteca Edit Station', 'biciteca') . '</h2>';
+		
+		if ($_GET['id']){
+			$station = get_post($_GET['id']);
+			if ($_POST){
+			update_post_meta($station->ID, 'station_code', $_POST['station_code']);
+			update_post_meta($station->ID, 'location', $_POST['location']);
+			$html .= '<p> Station ' . $_POST['title'] . ' was edited successfully!</p>';
+			}
+			$html .= '<form method="post" action="">' . "\n";
+				$html .= '<table class="form-table">';
+					$html .= '<tr>';
+						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'title', 'type'=>'text', 'description'=>'New station\'s name', 'placeholder'=> 'Higher Station'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'station_code', 'type'=>'text', 'description'=>'New station\'s code', 'placeholder'=> 'ST1'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'location', 'type'=>'text', 'description'=>'Description of the station\'s location.', 'placeholder'=> 'Next to the ferris wheel'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
+							$html .= '<input name="Submit" type="submit" class="button-primary" value="' . esc_attr( __( 'Save' , 'biciteca' ) ) . '" />' . "\n";
+						$html .= '</td>';
+					$html .= '</tr>';
+				$html .= '</table>';
+			$html .= '</form>';
+		$html .= '</div>';
+		echo $html;
+		} else {
+			$html .= '<p>You are on the wrong path. Find your way.</p>';
+		}
 	}
 
 	public function add_member_page(){
