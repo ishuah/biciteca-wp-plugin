@@ -1,19 +1,19 @@
 <?php 
 /*
- * Plugin Name: biciteca
- * Version: 0.1.0
+ * Plugin Name: biciteca wp plugin
+ * Version: 0.8.0
  * Plugin URI: http://spatialcollective.com/
  * Description: Biciteca Management Dashboard.
- * Author: David & Ishuah from Spatial Collective
+ * Author: Spatial Collective in colaboration with KDI
  * Author URI: http://spatialcollective.com/
- * Requires at least: 4.0
+ * Requires at least: 3.8
  * Tested up to: 4.0
  *
  * Text Domain: biciteca
  * Domain Path: /lang/
  *
  * @package WordPress
- * @author David & Ishuah from Spatial Collective
+ * @author Spatial Collective in colaboration with KDI
  * @since 0.1.0
  */
 
