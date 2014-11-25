@@ -22,7 +22,8 @@ class biciteca_SMS_API {
 			'CHECKIN_BIKE' => 'Your lock code is %d. Thank you for returning your Biciteca bike safely. We hope you enjoyed Biciteca, come back soon!',
 			'CANNOT_CHECKOUT_BIKE' => 'I\'m sorry, you cannot check out a Biciteca bike at this time as you already have a bike checked-out.',
 			'CANNOT_CHECKIN_BIKE' => 'I\'m sorry, you cannot check in a Biciteca bike, you do not have a bike checked-out.',
-			'UNAVAILABLE_SLOT' => 'The requested slot is not vacant, please try another one. Thank you.'
+			'UNAVAILABLE_SLOT' => 'The requested slot is not vacant, please try another one. Thank you.',
+			'INVALID_FORMAT' => 'Invalid text format, you need to specify a slot number.'
 			),
 		'ES' => array(
 			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a 760-625-6274 para renovar su membresía mensual.',
@@ -33,7 +34,8 @@ class biciteca_SMS_API {
 			'CHECKIN_BIKE' => 'Su código de candado es %d. Gracias por devolver la bicicleta a la estación de Biciteca con seguridad. Esperamos que haya disfrutado los servicios de Biciteca, vuelva pronto!',
 			'CANNOT_CHECKOUT_BIKE' => 'Lo lamento, no puede usar una bicicleta de Biciteca en este momento porque usted ya ha sacado una bicicleta.',
 			'CANNOT_CHECKIN_BIKE' => 'Lo siento, no se puede comprobar en una bicicleta Biciteca, usted no tiene una bicicleta desprotegido.',
-			'UNAVAILABLE_SLOT' => 'La solicitud de franja horaria no es vacante, por favor pruebe otra. Gracias.'
+			'UNAVAILABLE_SLOT' => 'La solicitud de franja horaria no es vacante, por favor pruebe otra. Gracias.',
+			'INVALID_FORMAT' => 'Formato de texto no válido, deberá especificar un número de ranura.'
 			)
 		);
 	}
@@ -118,6 +120,9 @@ class biciteca_SMS_API {
 
  				if ($text[0] == 'checkin'){
  					$valid = false;
+
+ 					
+
  					for($i = 1; $i <=12; $i++){
  						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $i);
  						if ($lock_status[0] == $_POST['From']) {
@@ -125,7 +130,12 @@ class biciteca_SMS_API {
  							break;
  						}
  					}
+
  					if($valid){
+ 						if (is_null($text[2])){
+ 							$this->send_response($this->sms_responses[$lang]['INVALID_FORMAT']);
+ 							exit;
+ 						}
  						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $text[2]);
 	 					if ($lock_status[0]){
 	 						$lock_code = get_post_meta($station->ID, 'lockcode_' . $text[2]);
@@ -139,13 +149,19 @@ class biciteca_SMS_API {
  					}
  					
 
- 				} elseif ($text[0] == 'checkout') {	
+ 				} elseif ($text[0] == 'checkout') {
+
  					for($i = 1; $i <=12; $i++){
  						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $i);
  						if ($lock_status[0] == $_POST['From']) {
  							$this->send_response($this->sms_responses[$lang]['CANNOT_CHECKOUT_BIKE']);
  							exit;
  						}
+ 					}
+
+ 					if (is_null($text[2])){
+ 						$this->send_response($this->sms_responses[$lang]['INVALID_FORMAT']);
+ 						exit;
  					}		
 
  					$lock_status = get_post_meta($station->ID, 'slot_taken_' . $text[2]);
