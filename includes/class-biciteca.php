@@ -21,9 +21,6 @@ class biciteca {
 
 		register_activation_hook( $this->file, array( $this , 'install') );
 		
-		$account_sid = get_option('wpt_twilio_sid'); 
-		$auth_token = get_option('wpt_twilio_auth_token'); 
-		$this->client = new Services_Twilio($account_sid, $auth_token);
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ), 10 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 10 );
@@ -37,8 +34,9 @@ class biciteca {
 		add_action('admin_menu', array( $this, 'add_pages') );
 
 
-		$this->pt_member = $this->register_post_type('member', 'Members', 'Member', 'Biciteca members');
-		$this->pt_station = $this->register_post_type('station', 'Station', 'Station', 'Biciteca stations');
+		$this->register_post_type('member', 'Members', 'Member', 'Biciteca members');
+		$this->register_post_type('station', 'Stations', 'Station', 'Biciteca stations');
+		$this->register_post_type('log', 'Logs', 'Log', 'Biciteca Logs');
 
 		$columns = array(
             'id'            => 'ID',
@@ -54,6 +52,7 @@ class biciteca {
 		}
 
 		$this->sms = new biciteca_SMS_API();
+		$this->logger = new biciteca_Data_logger();
 		
 	}
 
@@ -145,14 +144,7 @@ class biciteca {
 			$html .= '<h2>' . __('Stations', 'biciteca');
 			$html .= '<a class="add-new-h2" href="?page=biciteca-add-station" /><span class="typcn typcn-plus"></span></a>' . "\n";
 			$html .= '</h2>';
-			if ($_GET['send_sms']){
-				$message = $this->client->account->messages->create(array(
-    				'To' => "+254703535226", 
-					'From' => "+17605314114", 
-					'Body' => "yet another test! From Admin",  
-				));
-				$html .= "Sent message {$message->sid}";
-			}
+
 			$data = get_posts(array('post_type' => 'station'));
 			
 			foreach ( $data as $row):
@@ -168,6 +160,21 @@ class biciteca {
 				$html .= '</div>';
 				//$html .= '<a class="button-primary" href="?page=biciteca-admin-generate-lock-codes&id='. $row->ID .'" />' . esc_attr( __( 'Generate Lock Codes' , 'biciteca' ) ) . '</a>' . "\n";
 			endforeach;
+			$html .= '</div>';
+			$html .= '<div class="panel half">';
+				$html .= '<h2> Station Data </h2>';
+				
+				foreach ($data as $row){
+					$html .= '<h3>' . $row->post_title . '</h3>';
+					$stats = $this->logger->read_logs('stationId', $row->ID);
+
+					foreach ( $stats as $stat ){
+						if ( $stat['action'] == 'checkin' ){
+							
+						}
+					}
+
+				}
 			$html .= '</div>';
 		$html .= '</div>';
 		echo $html;

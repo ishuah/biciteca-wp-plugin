@@ -11,6 +11,11 @@ class biciteca_SMS_API {
 		add_action('parse_request', array($this, 'sniff_requests'), 0);
 		add_action('init', array($this, 'add_endpoint'), 0);
 
+		$account_sid = get_option('wpt_twilio_sid'); 
+		$auth_token = get_option('wpt_twilio_auth_token'); 
+		$this->client = new Services_Twilio($account_sid, $auth_token);
+		$this->logger = new biciteca_Data_Logger();
+
 		$this->sms_responses = array(
 		'EN' => array(
 			'EXPIRED_MEMBERSHIP' => 'I\'m sorry, you cannot check out a Biciteca bike at this time. You do not have a membership for this month. Please contact Desert Riderz at 760-625-6274 about renewing your monthly membership.',
@@ -23,7 +28,10 @@ class biciteca_SMS_API {
 			'CANNOT_CHECKOUT_BIKE' => 'I\'m sorry, you cannot check out a Biciteca bike at this time as you already have a bike checked-out.',
 			'CANNOT_CHECKIN_BIKE' => 'I\'m sorry, you cannot check in a Biciteca bike, you do not have a bike checked-out.',
 			'UNAVAILABLE_SLOT' => 'The requested slot is not vacant, please try another one. Thank you.',
-			'INVALID_FORMAT' => 'Invalid text format, you need to specify a slot number.'
+			'INVALID_FORMAT' => 'Invalid text format, you need to specify a slot number.',
+			'WITH_CODE' => ' with code ',
+			'HELP_CODE' => 'Text \'helpme\' for help info.',
+			'HELP_INFO' => "check st1 - check if station st1 has bikes\ncheckout st1 1 - checkout bike from slot 1 at station st1\ncheck in st1 1 - checkin bike on slot 1 at station st1.\nEach station has 12 slots.\nText 'helpme stations' to get a list of available stations."
 			),
 		'ES' => array(
 			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a 760-625-6274 para renovar su membresía mensual.',
@@ -35,7 +43,10 @@ class biciteca_SMS_API {
 			'CANNOT_CHECKOUT_BIKE' => 'Lo lamento, no puede usar una bicicleta de Biciteca en este momento porque usted ya ha sacado una bicicleta.',
 			'CANNOT_CHECKIN_BIKE' => 'Lo siento, no se puede comprobar en una bicicleta Biciteca, usted no tiene una bicicleta desprotegido.',
 			'UNAVAILABLE_SLOT' => 'La solicitud de franja horaria no es vacante, por favor pruebe otra. Gracias.',
-			'INVALID_FORMAT' => 'Formato de texto no válido, deberá especificar un número de ranura.'
+			'INVALID_FORMAT' => 'Formato de texto no válido, deberá especificar un número de ranura.',
+			'WITH_CODE' => ' con código ',
+			'HELP_CODE' => '\'helpme\' texto para información de ayuda.',
+			'HELP_INFO' => "check st1 - comprobar si st1 estación tiene bicicletas\ncheckout st1 1 - bicicleta de pago y envío de la ranura 1 en st1 estación\ncheckin st1 1 - comprobar en bicicleta en la ranura 1 en st1 estación.\nCada estación tiene 12 ranuras.\nTexto 'helpme stations' para obtener una lista de estaciones disponibles."
 			)
 		);
 	}
@@ -97,8 +108,19 @@ class biciteca_SMS_API {
 
  		if ($members){
  			$lang = (get_post_meta($members[0]->ID, 'opt_language')[0] == 'ES' ? 'ES' : 'EN');
- 			if ($text[0] == 'help'){
- 				$this->send_response("We are compiling help content, please bear with us.");
+ 			if ($text[0] == 'helpme'){
+ 				if ($text[1]){
+ 					if ($text[1] == 'station'){
+ 					$stations = get_posts(array('post_type' => 'station'));
+ 					$stations_info = "";
+ 					foreach ($stations as $station){
+ 						$stations_info .= $station->post_title . $this->sms_responses[$lang]['WITH_CODE'] . get_post_meta($station->ID, "station_code")[0] . "\n";
+ 					}
+ 					$this->send_response($stations_info);
+ 					}
+ 				} else {
+ 					$this->send_response($this->sms_responses[$lang]['HELP_INFO']);
+ 				}
  			} else {
  				if($this->membership_is_valid($members[0]->ID)){
  				$station = query_posts(array(
@@ -114,14 +136,12 @@ class biciteca_SMS_API {
  						))[0];
 
  				if(!$station){
- 					$this->send_response($this->sms_responses[$lang]['INVALID_STATION']);
+ 					$this->send_response($this->sms_responses[$lang]['INVALID_STATION'] . " \n" . $this->sms_responses[$lang]['HELP_CODE']);
  					exit;
  				}
 
  				if ($text[0] == 'checkin'){
  					$valid = false;
-
- 					
 
  					for($i = 1; $i <=12; $i++){
  						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $i);
@@ -132,8 +152,8 @@ class biciteca_SMS_API {
  					}
 
  					if($valid){
- 						if (is_null($text[2])){
- 							$this->send_response($this->sms_responses[$lang]['INVALID_FORMAT']);
+ 						if (is_null($text[2]) || $text[2] == ''){
+ 							$this->send_response($this->sms_responses[$lang]['INVALID_FORMAT'] . " \n" . $this->sms_responses[$lang]['HELP_CODE']);
  							exit;
  						}
  						$lock_status = get_post_meta($station->ID, 'slot_taken_' . $text[2]);
@@ -141,6 +161,10 @@ class biciteca_SMS_API {
 	 						$lock_code = get_post_meta($station->ID, 'lockcode_' . $text[2]);
 	 						$this->send_response(sprintf($this->sms_responses[$lang]['CHECKIN_BIKE'], $lock_code[0]));
 	 						delete_post_meta($station->ID, 'slot_taken_' . $text[2]);
+
+	 						// LOGGER HOOK
+	 						$this->logger->write_log($members[0]->ID, $_POST['From'], $station->ID, $text[0]);
+
 	 					} else {
 	 						$this->send_response($this->sms_responses[$lang]['UNAVAILABLE_SLOT']);
 	 					}
@@ -159,18 +183,21 @@ class biciteca_SMS_API {
  						}
  					}
 
- 					if (is_null($text[2])){
- 						$this->send_response($this->sms_responses[$lang]['INVALID_FORMAT']);
+ 					if (is_null($text[2]) || $text[2] == ''){
+ 						$this->send_response($this->sms_responses[$lang]['INVALID_FORMAT']. " \n" . $this->sms_responses[$lang]['HELP_CODE']);
  						exit;
  					}		
 
  					$lock_status = get_post_meta($station->ID, 'slot_taken_' . $text[2]);
  					if ($lock_status[0]){
- 						$this->send_response($this->sms_responses[$lang]['TAKEN_BIKE']);
+ 						$this->send_response($this->sms_responses[$lang]['TAKEN_BIKE']. " \n" . $this->sms_responses[$lang]['HELP_CODE']);
  					} else {
  						$lock_code = get_post_meta($station->ID, 'lockcode_' . $text[2]);
  						$this->send_response(sprintf($this->sms_responses[$lang]['CHECKOUT_BIKE'], $lock_code[0]));
  						update_post_meta($station->ID, 'slot_taken_' . $text[2], $_POST['From']);
+
+ 						// LOGGER HOOK
+	 					$this->logger->write_log($members[0]->ID, $_POST['From'], $station->ID, $text[0]);
  					}
  				
  				} elseif ($text[0] == 'check'){
@@ -184,7 +211,8 @@ class biciteca_SMS_API {
  							exit;
  						}
  					}
- 					$this->send_response($count . $this->sms_responses[$lang]['BIKES_AVAILABLE'] . $text[1]);
+ 					$this->send_response($count . $this->sms_responses[$lang]['BIKES_AVAILABLE'] . $text[1] . ". \n" . $this->sms_responses[$lang]['HELP_CODE']);
+ 					
  				}
  			} else {
  				$this->send_response($this->sms_responses[$lang]['EXPIRED_MEMBERSHIP']);
@@ -198,9 +226,9 @@ class biciteca_SMS_API {
 
  	protected function send_response($msg){
  		header('content-type: text/xml; charset=utf-8');
- 		$response = '<Response>';
-    	$response .= '<Message>' . $msg . '</Message>';
-    	$response .= '</Response>';
+ 		$response = "<Response>";
+    	$response .= "<Message>" . $msg . "</Message>";
+    	$response .= "</Response>";
     	echo $response;
  	}
 
@@ -211,6 +239,14 @@ class biciteca_SMS_API {
 			return true;
 		}
 			return false;
+ 	}
+
+ 	protected function send_text($msg, $recipient){
+ 		$message = $this->client->account->messages->create(array(
+    				'To' => $recipient, 
+					'From' => "+17605314114", 
+					'Body' => $msg,  
+				));
  	}
 }
 ?>

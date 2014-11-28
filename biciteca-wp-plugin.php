@@ -33,6 +33,7 @@ require_once( 'includes/lib/class-biciteca-post-type.php' );
 require_once( 'includes/lib/class-biciteca-admin-api.php' );
 require_once( 'includes/lib/class-biciteca-list-table.php' );
 require_once( 'includes/lib/class-biciteca-sms.php' );
+require_once( 'includes/lib/class-biciteca-data-logger.php' );
 
 function biciteca () {
 	$instance = biciteca::instance(__FILE__, '0.1.0');
