@@ -166,11 +166,12 @@ class biciteca {
 				
 				foreach ($data as $row){
 					$html .= '<h3>' . $row->post_title . '</h3>';
+					$html .= '<p>Work in progress.</p>';
 					$stats = $this->logger->read_logs('stationId', $row->ID);
 
 					foreach ( $stats as $stat ){
 						if ( $stat['action'] == 'checkin' ){
-							
+
 						}
 					}
 

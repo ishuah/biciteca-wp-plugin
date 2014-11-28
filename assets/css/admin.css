@@ -38,7 +38,9 @@ line-height: 1.2;
 }
 
 .half {
-	width: 50%;
+	width: 40%;
+	float: left;
+	margin: 20px;
 }
 
 div.station {
