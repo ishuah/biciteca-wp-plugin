@@ -12,15 +12,16 @@ class biciteca_SMS_API {
 		add_action('init', array($this, 'add_endpoint'), 0);
 
 		$account_sid = get_option('wpt_twilio_sid'); 
-		$auth_token = get_option('wpt_twilio_auth_token'); 
+		$auth_token = get_option('wpt_twilio_auth_token');
+		$contact_number = get_option('wpt_contact_number');
 		$this->client = new Services_Twilio($account_sid, $auth_token);
 		$this->logger = new biciteca_Data_Logger();
 
 		$this->sms_responses = array(
 		'EN' => array(
-			'EXPIRED_MEMBERSHIP' => 'I\'m sorry, you cannot check out a Biciteca bike at this time. You do not have a membership for this month. Please contact Desert Riderz at 760-625-6274 about renewing your monthly membership.',
+			'EXPIRED_MEMBERSHIP' => 'I\'m sorry, you cannot check out a Biciteca bike at this time. You do not have a membership for this month. Please contact Desert Riderz at ' . $contact_number . ' about renewing your monthly membership.',
 			'BIKES_AVAILABLE' => ' bikes are currently available at station ',
-			'NON_USER' => 'Hi, this number is not registered on the bike system. Please contact Desert Riderz at 760-625-6274 about starting your monthly membership.',
+			'NON_USER' => 'Hi, this number is not registered on the bike system. Please contact Desert Riderz at ' . $contact_number . ' about starting your monthly membership.',
 			'INVALID_STATION' => 'The station code you sent is not valid, please try again. Thank you.',
 			'TAKEN_BIKE' => 'The bike you have requested is not available, please try another one. Thank you.',
 			'CHECKOUT_BIKE' => 'Your lock code is %d. You have 2 hours to enjoy your Biciteca bike.',
@@ -34,7 +35,7 @@ class biciteca_SMS_API {
 			'HELP_INFO' => "check st1 - check if station st1 has bikes\ncheckout st1 1 - checkout bike from slot 1 at station st1\ncheck in st1 1 - checkin bike on slot 1 at station st1.\nEach station has 12 slots.\nText 'helpme stations' to get a list of available stations."
 			),
 		'ES' => array(
-			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a 760-625-6274 para renovar su membresía mensual.',
+			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a ' . $contact_number . ' para renovar su membresía mensual.',
 			'BIKES_AVAILABLE' => ' bicicletas están disponibles en la estación ',
 			'INVALID_STATION' => 'El código de estación que usted envió no es válida, por favor intente de nuevo. Gracias.',
 			'TAKEN_BIKE' => 'La moto que ha solicitado no está disponible, por favor, pruebe otra. Gracias.',

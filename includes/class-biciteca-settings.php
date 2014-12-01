@@ -126,64 +126,24 @@ class biciteca_Settings {
 					'type'			=> 'text',
 					'default'		=> '',
 					'placeholder'	=> __( 'xxxxxxxxxxxxxxxxxxxxxx', 'biciteca' )
-				)/*,
-				array(
-					'id' 			=> 'password_field',
-					'label'			=> __( 'A Password' , 'biciteca' ),
-					'description'	=> __( 'This is a standard password field.', 'biciteca' ),
-					'type'			=> 'password',
-					'default'		=> '',
-					'placeholder'	=> __( 'Placeholder text', 'biciteca' )
-				),
-				array(
-					'id' 			=> 'secret_text_field',
-					'label'			=> __( 'Some Secret Text' , 'biciteca' ),
-					'description'	=> __( 'This is a secret text field - any data saved here will not be displayed after the page has reloaded, but it will be saved.', 'biciteca' ),
-					'type'			=> 'text_secret',
-					'default'		=> '',
-					'placeholder'	=> __( 'Placeholder text', 'biciteca' )
-				),
-				array(
-					'id' 			=> 'text_block',
-					'label'			=> __( 'A Text Block' , 'biciteca' ),
-					'description'	=> __( 'This is a standard text area.', 'biciteca' ),
-					'type'			=> 'textarea',
-					'default'		=> '',
-					'placeholder'	=> __( 'Placeholder text for this textarea', 'biciteca' )
-				),
-				array(
-					'id' 			=> 'single_checkbox',
-					'label'			=> __( 'An Option', 'biciteca' ),
-					'description'	=> __( 'A standard checkbox - if you save this option as checked then it will store the option as \'on\', otherwise it will be an empty string.', 'biciteca' ),
-					'type'			=> 'checkbox',
-					'default'		=> ''
-				),
-				array(
-					'id' 			=> 'select_box',
-					'label'			=> __( 'A Select Box', 'biciteca' ),
-					'description'	=> __( 'A standard select box.', 'biciteca' ),
-					'type'			=> 'select',
-					'options'		=> array( 'drupal' => 'Drupal', 'joomla' => 'Joomla', 'wordpress' => 'WordPress' ),
-					'default'		=> 'wordpress'
-				),
-				array(
-					'id' 			=> 'radio_buttons',
-					'label'			=> __( 'Some Options', 'biciteca' ),
-					'description'	=> __( 'A standard set of radio buttons.', 'biciteca' ),
-					'type'			=> 'radio',
-					'options'		=> array( 'superman' => 'Superman', 'batman' => 'Batman', 'ironman' => 'Iron Man' ),
-					'default'		=> 'batman'
-				),
-				array(
-					'id' 			=> 'multiple_checkboxes',
-					'label'			=> __( 'Some Items', 'biciteca' ),
-					'description'	=> __( 'You can select multiple items and they will be stored as an array.', 'biciteca' ),
-					'type'			=> 'checkbox_multi',
-					'options'		=> array( 'square' => 'Square', 'circle' => 'Circle', 'rectangle' => 'Rectangle', 'triangle' => 'Triangle' ),
-					'default'		=> array( 'circle', 'triangle' )
-				)*/
+				)
 			)
 		);
+
+		$settings['contact'] = array(
+			'title'                 => __('Contact Details', 'biciteca'),
+			'description'           => __('.', 'biciteca'),
+			'fields'                => array(
+				array(
+					'id'            => 'contact_number',
+					'label'         => __( 'Contact Number', 'biciteca'),
+					'description'   => __( 'Contact Number', 'biciteca'),
+					'type'          => 'text',
+					'default'       => '',
+					'placeholder'   => '111-222-3333'
+					)
+				)
+			);
 
 		/*$settings['extra'] = array(
 			'title'					=> __( 'Extra', 'biciteca' ),

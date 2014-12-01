@@ -48,7 +48,7 @@ class biciteca {
 
 		if (is_admin() ){
 			$this->admin = new biciteca_Admin_API();
-			$this->admin_member_table = new biciteca_List_Table($this->pt_member->post_type, $columns, 'member', 'members' );
+			$this->admin_member_table = new biciteca_List_Table('member', $columns, 'member', 'members' );
 		}
 
 		$this->sms = new biciteca_SMS_API();
@@ -108,7 +108,7 @@ class biciteca {
 	public function add_pages(){
 		add_menu_page(__('Biciteca Admin','biciteca'), __('Biciteca','biciteca'), 'manage_options', 'biciteca-plugin', array( $this, 'biciteca_page') );
 		
-		add_submenu_page('biciteca-plugin', __('Registration','biciteca'), __('Registration','biciteca'), 'manage_options', 'biciteca-registration', array( $this, 'registration_landing_page') );
+		add_submenu_page('biciteca-plugin', __('Members','biciteca'), __('Members','biciteca'), 'manage_options', 'biciteca-registration', array( $this, 'registration_landing_page') );
 		add_submenu_page('biciteca-plugin', __('Register New Member','biciteca'), __('Register New Member','biciteca'), 'manage_options', 'biciteca-add-member', array( $this, 'add_member_page') );
 		add_submenu_page('biciteca-plugin', __('Admin','biciteca'), __('Admin','biciteca'), 'manage_options', 'biciteca-admin', array( $this, 'admin_landing_page') );
 		
@@ -166,15 +166,22 @@ class biciteca {
 				
 				foreach ($data as $row){
 					$html .= '<h3>' . $row->post_title . '</h3>';
-					$html .= '<p>Work in progress.</p>';
+					
 					$stats = $this->logger->read_logs('stationId', $row->ID);
-
-					foreach ( $stats as $stat ){
-						if ( $stat['action'] == 'checkin' ){
-
+					if (!is_null($stats)){
+						$html .= '<table class="form-table">';
+							$html .= '<tbody>';
+								$html .= '<tr><th>User</th><th>Phone #</th><th>Action</th><th>Timestamp</th></tr>';
+						foreach ( $stats as $stat ){
+								$html .= '<tr><td>' . get_post($stat['userId'])->post_title . '</td><td>' . $stat['userNumber'] . '</td><td>' . $stat['action'] . '</td><td>' . $stat['timestamp'] . '</td></tr>';
 						}
+							$html .= '</tbody>';
+					} else {
+						$html .= '<p>There is currently no data for this station.</p>';
 					}
-
+					
+							$html .= '</tbody>';
+						$html .= '</table>';
 				}
 			$html .= '</div>';
 		$html .= '</div>';
@@ -406,12 +413,14 @@ class biciteca {
 				}
 			}
 			$html = '<div class="wrap" id="' . $this->_token . '_settings">' . "\n";
+				$html .= '<div class="panel half">';
 				$html .= '<h2>' . __('Biciteca Add Member', 'biciteca') . '</h2>';
 				$html .= '<p>' . $_POST['title'] . ' was added successfully!</p>';
 			$html .= '</div>';
 			echo $html;
 		} else {
 			$html = '<div class="wrap" id="' . $this->_token . '_settings">' . "\n";
+				$html .= '<div class="panel half">';
 				$html .= '<h2>' . __('Biciteca Add Member', 'biciteca') . '</h2>';
 				$html .= '<h4>' . __('New member details', 'biciteca') . '</h4>';
 				$html .= '<form method="post" action="">' . "\n";
@@ -501,12 +510,14 @@ class biciteca {
 					$html .= '</table>';
 				$html .= '</form>';
 			$html .= '</div>';
+			$html .= '</div>';
 			echo $html;
 		}
 	}
 
 	public function edit_member_page(){
 		$html = '<div class="wrap" id="' . $this->_token . '_settings">' . "\n";
+		$html .= '<div class="panel half">';
 		$html .= '<h2>' . __('Biciteca Edit Member', 'biciteca') . '</h2>';
 		if ($_GET['id']){
 			$member = get_post($_GET['id']);
@@ -636,6 +647,21 @@ class biciteca {
 			
 		}else{
 			$html .= '<p>Error!</p>';
+		}
+		$html .= '</div>';
+		$stats = $this->logger->read_logs('userId', $member->ID);
+		if (!is_null($stats)){
+			$html .= '<div class="panel half">';
+				$html .= '<h2>User Data</h2>';
+					$html .= '<table class="form-table">';
+						$html .= '<tbody>';
+						$html .= '<tr><th>Station</th><th>Phone #</th><th>Action</th><th>Timestamp</th></tr>';
+						foreach ( $stats as $stat ){
+							$html .= '<tr><td>' . get_post($stat['stationId'])->post_title . '</td><td>' . $stat['userNumber'] . '</td><td>' . $stat['action'] . '</td><td>' . $stat['timestamp'] . '</td></tr>';
+						}
+						$html .= '</tbody>';
+					$html .= '</table>';
+			$html .= '</div>';
 		}
 		$html .= '</div>';
 		echo $html;

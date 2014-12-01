@@ -24,7 +24,8 @@ class biciteca_Data_Logger {
 
 	public function read_logs($filter = 'all', $targetId){
 		$query = array( 
-			'post_type' => $this->post_type
+			'post_type' => $this->post_type,
+			'posts_per_page' => 15
 			);
 		$logs = [];
 		if ( $filter == 'userId' ){
