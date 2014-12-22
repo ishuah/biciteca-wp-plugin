@@ -225,9 +225,10 @@ class biciteca {
 		$html .= '<div class="panel half">';
 			if ($_GET['id']){
 				$station = get_post($_GET['id']);
-
+				$number_of_slots = get_post_meta($station->ID, 'number_of_slots')[0];
 				if ($_POST['reset']){
-					for($i = 1; $i <=12; $i++){
+					
+					for($i = 1; $i <=$number_of_slots; $i++){
 						update_post_meta($station->ID, 'new_lockcode_' . $i, rand(1000, 9999));
 					}
 					update_post_meta($station->ID, 'last_reset', date("F j, Y, g:i a"));
@@ -237,7 +238,7 @@ class biciteca {
 				}
 
 				if ($_POST['locks_are_updated']){
-					for($i = 1; $i <=12; $i++){
+					for($i = 1; $i <=$number_of_slots; $i++){
 						update_post_meta($station->ID, 'lockcode_' . $i, get_post_meta($station->ID, 'new_lockcode_'.$i)[0]);
 						delete_post_meta($station->ID, 'new_lockcode_'.$i);
 					}
@@ -266,7 +267,7 @@ class biciteca {
 					$html .= '<table class="form-table">';
 						$html .= '<tbody>';
 						$html .= '<tr><th>Lock #</th><th>Current Codes</th><th>New Codes</th></tr>';
-							for($i = 1; $i <=12; $i++){
+							for($i = 1; $i <=$number_of_slots; $i++){
 								$html .= '<tr>';
 									$html .= '<td>';
 									$html .= $i;
@@ -285,7 +286,7 @@ class biciteca {
 					$html .= '<table class="form-table">';
 						$html .= '<tbody>';
 						$html .= '<tr><th>Lock #</th><th>Codes</th></tr>';
-							for($i = 1; $i <=12; $i++){
+							for($i = 1; $i <=$number_of_slots; $i++){
 								$html .= '<tr>';
 									$html .= '<td>';
 									$html .= $i;
@@ -314,18 +315,33 @@ class biciteca {
 		if ($_POST){
 			$new_station = array(
 				'post_title' => $_POST['title'],
-				'post_type' => $this->pt_station->post_type,
+				'post_type' => 'station',
 				'post_status' => 'publish'
 				);
 			$station_id = wp_insert_post( $new_station );
 			$station = get_post($station_id);
+			if ($_POST['number_of_slots']){
+				update_post_meta($station->ID, 'number_of_slots', $_POST['number_of_slots']);
+			}else{
+				update_post_meta($station->ID, 'number_of_slots', 12);
+			}
+			
+			$number_of_slots = get_post_meta($station->ID, 'number_of_slots')[0];
 
-			for($i = 0; $i <=12; $i++){
+			for($i = 0; $i <=$number_of_slots; $i++){
 				update_post_meta($station->ID, 'new_lockcode_' . $i, rand(1000, 9999));
 			}
+			if ($_POST['reset_days']){
+				update_post_meta($station->ID, 'reset_days', $_POST['reset_days']);
+			}else{
+				update_post_meta($station->ID, 'reset_days', 7);
+			}
+			
+			$reset_days = get_post_meta($station->ID, 'reset_days')[0];
 			update_post_meta($station->ID, 'last_reset', date("F j, Y, g:i a"));
-			update_post_meta($station->ID, 'next_reset', date("F j, Y, g:i a", strtotime("+7 day", time())));
+			update_post_meta($station->ID, 'next_reset', date("F j, Y, g:i a", strtotime("+". $reset_days ." day", time())));
 			update_post_meta($station->ID, 'station_code', $_POST['station_code']);
+			update_post_meta($station->ID, 'location', $_POST['location']);
 			$html .= '<p> Station ' . $_POST['title'] . ' was added successfully!</p>';
 		}
 			$html .= '<form method="post" action="">' . "\n";
@@ -347,6 +363,16 @@ class biciteca {
 					$html .= '</tr>';
 					$html .= '<tr>';
 						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'number_of_slots', 'type'=>'text', 'description'=>'Number of slots.', 'placeholder'=> '12'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'reset_days', 'type'=>'text', 'description'=>'Number of days between resets.', 'placeholder'=> '7'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
 							$html .= '<input name="Submit" type="submit" class="button-primary" value="' . esc_attr( __( 'Save' , 'biciteca' ) ) . '" />' . "\n";
 						$html .= '</td>';
 					$html .= '</tr>';
@@ -363,9 +389,22 @@ class biciteca {
 		if ($_GET['id']){
 			$station = get_post($_GET['id']);
 			if ($_POST){
-			update_post_meta($station->ID, 'station_code', $_POST['station_code']);
-			update_post_meta($station->ID, 'location', $_POST['location']);
-			$html .= '<p> Station ' . $_POST['title'] . ' was edited successfully!</p>';
+				update_post_meta($station->ID, 'station_code', $_POST['station_code']);
+				update_post_meta($station->ID, 'location', $_POST['location']);
+				if ($_POST['number_of_slots']){
+					update_post_meta($station->ID, 'number_of_slots', $_POST['number_of_slots']);
+				}else{
+					update_post_meta($station->ID, 'number_of_slots', 12);
+				}
+
+				if ($_POST['reset_days']){
+					update_post_meta($station->ID, 'reset_days', $_POST['reset_days']);
+				}else{
+					update_post_meta($station->ID, 'reset_days', 7);
+				}
+				
+
+				$html .= '<p> Station ' . $_POST['title'] . ' was edited successfully!</p>';
 			}
 			$html .= '<form method="post" action="">' . "\n";
 				$html .= '<table class="form-table">';
@@ -386,6 +425,16 @@ class biciteca {
 					$html .= '</tr>';
 					$html .= '<tr>';
 						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'number_of_slots', 'type'=>'text', 'description'=>'Number of slots.', 'placeholder'=> '12'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
+							$html .= $this->admin->display_field(array('id'=>'reset_days', 'type'=>'text', 'description'=>'Number of days between resets.', 'placeholder'=> '7'), $station, false);
+						$html .= '</td>';
+					$html .= '</tr>';
+					$html .= '<tr>';
+						$html .= '<td>';
 							$html .= '<input name="Submit" type="submit" class="button-primary" value="' . esc_attr( __( 'Save' , 'biciteca' ) ) . '" />' . "\n";
 						$html .= '</td>';
 					$html .= '</tr>';
@@ -402,7 +451,7 @@ class biciteca {
 		if ($_POST){
 			$new_member = array(
 				'post_title' => $_POST['title'],
-				'post_type' => $this->pt_member->post_type,
+				'post_type' => 'member',
 				'post_status' => 'publish'
 				);
 			$member_id = wp_insert_post( $new_member );
