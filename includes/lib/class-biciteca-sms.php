@@ -32,7 +32,7 @@ class biciteca_SMS_API {
 			'INVALID_FORMAT' => 'Invalid text format, you need to specify a slot number.',
 			'WITH_CODE' => ' with code ',
 			'HELP_CODE' => 'Text \'helpme\' for help info.',
-			'HELP_INFO' => "check st1: check if station st1 has bikes\ncheckout st1 1: checkout bike from slot 1 at station st1\ncheck in st1 1: checkin bike on slot 1 at station st1.\nEach station has 12 slots.\nText 'helpme stations' to get a list of available stations."
+			'HELP_INFO' => "check st1: check if station st1 has bikes\n\ncheckout st1 1: checkout bike from slot 1 at station st1\n\ncheck in st1 1: checkin bike on slot 1 at station st1.\n\nEach station has 12 slots.\n\nText 'helpme stations' to get a list of available stations."
 			),
 		'ES' => array(
 			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a ' . $contact_number . ' para renovar su membresía mensual.',
@@ -47,7 +47,7 @@ class biciteca_SMS_API {
 			'INVALID_FORMAT' => 'Formato de texto no válido, deberá especificar un número de ranura.',
 			'WITH_CODE' => ' con código ',
 			'HELP_CODE' => '\'helpme\' texto para información de ayuda.',
-			'HELP_INFO' => "check st1: comprobar si st1 estación tiene bicicletas\ncheckout st1 1: bicicleta de pago y envío de la ranura 1 en st1.\ncheckin st1 1: comprobar en bicicleta en la ranura 1 en st1.\nCada estación tiene 12 ranuras.\nTexto 'helpme stations' para obtener una lista de estaciones disponibles."
+			'HELP_INFO' => "check st1: comprobar si st1 estación tiene bicicletas\n\ncheckout st1 1: bicicleta de pago y envío de la ranura 1 en st1.\n\ncheckin st1 1: comprobar en bicicleta en la ranura 1 en st1.\n\nCada estación tiene 12 ranuras.\n\nTexto 'helpme stations' para obtener una lista de estaciones disponibles."
 			)
 		);
 	}
