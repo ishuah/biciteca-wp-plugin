@@ -10,6 +10,7 @@ class biciteca_SMS_API {
 		add_filter('query_vars', array($this, 'add_query_vars'), 0);
 		add_action('parse_request', array($this, 'sniff_requests'), 0);
 		add_action('init', array($this, 'add_endpoint'), 0);
+		add_action('send_warning_text', array($this, 'send_text'), 0, 2);
 
 		$account_sid = get_option('wpt_twilio_sid'); 
 		$auth_token = get_option('wpt_twilio_auth_token');
@@ -32,7 +33,8 @@ class biciteca_SMS_API {
 			'INVALID_FORMAT' => 'Invalid text format, you need to specify a slot number.',
 			'WITH_CODE' => ' with code ',
 			'HELP_CODE' => 'Text \'helpme\' for help info.',
-			'HELP_INFO' => "check st1: check if station st1 has bikes\n\ncheckout st1 1: checkout bike from slot 1 at station st1\n\ncheck in st1 1: checkin bike on slot 1 at station st1.\n\nEach station has 12 slots.\n\nText 'helpme stations' to get a list of available stations."
+			'HELP_INFO' => "check st1: check if station st1 has bikes\n\ncheckout st1 1: checkout bike from slot 1 at station st1\n\ncheck in st1 1: checkin bike on slot 1 at station st1.\n\nEach station has 12 slots.\n\nText 'helpme stations' to get a list of available stations.",
+			'CHECKIN_WARNING' => "Your Biciteca bike is due in 15 minutes. Please return to any Biciteca station with available slots."
 			),
 		'ES' => array(
 			'EXPIRED_MEMBERSHIP' => 'Lo lamento, usted no puede usar una bicicleta en este momento. Usted no ha pagado su membresía para este mes. Por favor contacte a Desert Riderz a ' . $contact_number . ' para renovar su membresía mensual.',
@@ -47,7 +49,8 @@ class biciteca_SMS_API {
 			'INVALID_FORMAT' => 'Formato de texto no válido, deberá especificar un número de ranura.',
 			'WITH_CODE' => ' con código ',
 			'HELP_CODE' => '\'helpme\' texto para información de ayuda.',
-			'HELP_INFO' => "check st1: comprobar si st1 estación tiene bicicletas\n\ncheckout st1 1: bicicleta de pago y envío de la ranura 1 en st1.\n\ncheckin st1 1: comprobar en bicicleta en la ranura 1 en st1.\n\nCada estación tiene 12 ranuras.\n\nTexto 'helpme stations' para obtener una lista de estaciones disponibles."
+			'HELP_INFO' => "check st1: comprobar si st1 estación tiene bicicletas\n\ncheckout st1 1: bicicleta de pago y envío de la ranura 1 en st1.\n\ncheckin st1 1: comprobar en bicicleta en la ranura 1 en st1.\n\nCada estación tiene 12 ranuras.\n\nTexto 'helpme stations' para obtener una lista de estaciones disponibles.",
+			'CHECKIN_WARNING' => "Su bicicleta de Biciteca debe ser entregada en 15 minutos. Por favor, devuélvala a cualquier estación de Biciteca que tenga espacios disponibles."
 			)
 		);
 	}
@@ -199,6 +202,8 @@ class biciteca_SMS_API {
 
  						// LOGGER HOOK
 	 					$this->logger->write_log($members[0]->ID, $_POST['From'], $station->ID, $text[0]);
+	 					//Schedule warning text 1 hour 45 minutes from now
+	 					wp_schedule_single_event(time() + 6300, 'send_warning_text',  array( $this->sms_responses[$lang]['CHECKIN_WARNING'], $_POST['From']));
  					}
  				
  				} elseif ($text[0] == 'check'){
@@ -214,6 +219,8 @@ class biciteca_SMS_API {
  					}
  					$this->send_response($count . $this->sms_responses[$lang]['BIKES_AVAILABLE'] . $text[1] . ". \n" . $this->sms_responses[$lang]['HELP_CODE']);
  					
+ 				} elseif($text[0] == 'rimshot'){
+ 					$this->send_text("looks good from here", $_POST['From']);
  				}
  			} else {
  				$this->send_response($this->sms_responses[$lang]['EXPIRED_MEMBERSHIP']);
@@ -242,7 +249,7 @@ class biciteca_SMS_API {
 			return false;
  	}
 
- 	protected function send_text($msg, $recipient){
+ 	public function send_text($msg, $recipient){
  		$message = $this->client->account->messages->create(array(
     				'To' => $recipient, 
 					'From' => "+17605314114", 
