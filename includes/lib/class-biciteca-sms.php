@@ -220,7 +220,8 @@ class biciteca_SMS_API {
  					$this->send_response($count . $this->sms_responses[$lang]['BIKES_AVAILABLE'] . $text[1] . ". \n" . $this->sms_responses[$lang]['HELP_CODE']);
  					
  				} elseif($text[0] == 'rimshot'){
- 					$this->send_text("looks good from here", $_POST['From']);
+ 					//$this->send_text("looks good from here", $_POST['From']);
+ 					wp_schedule_single_event(time() + 60, 'send_warning_text',  array( "This is a status check. Firing on all cylinders.", $_POST['From']));
  				}
  			} else {
  				$this->send_response($this->sms_responses[$lang]['EXPIRED_MEMBERSHIP']);
