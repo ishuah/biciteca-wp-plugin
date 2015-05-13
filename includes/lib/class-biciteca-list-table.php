@@ -15,16 +15,21 @@ class Biciteca_List_Table extends WP_List_Table {
     * @param string $singular singular name
     * @param string $plural plural name
     */
+
+    public $columns;
+    public $post_type;
+    public $_column_headers;
+    public $items;
+
 	function __construct($post_type = '', $columns = array(), $singular = '', $plural = '') {
        parent::__construct( array(
       'singular'=> $singular, 
       'plural' => $plural,
       'ajax'   => true 
       ) );
-
+       
        $this->columns = $columns;
        $this->post_type = $post_type;
-
        $this->prepare_items();
       
     }
@@ -71,6 +76,7 @@ class Biciteca_List_Table extends WP_List_Table {
         $posts = get_posts(array('post_type' => $this->post_type));
         foreach ($posts as $post):
             $postdata = array();
+            
             foreach ( $this->columns as $key => $values):
                 if ($key == 'id'){
                     $postdata[$key] = $post->ID;
